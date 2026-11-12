@@ -14,6 +14,7 @@ const out = '_site'
 // Every markdown file in docs/ has to be listed here, the build fails otherwise.
 const projects = {
   libquake: {
+    title: 'core lib',
     kind: 'c++ library',
     blurb:
       'Loads Quake 1 .map, .bsp and .wad files into meshes per texture, collision hulls, entities, RGBA textures and lightmaps split by light style. Maps can be lit with the built-in baker, without the Quake compile tools.',
@@ -48,6 +49,7 @@ const projects = {
     ],
   },
   unity: {
+    title: 'unity',
     kind: 'unity package',
     blurb:
       'Imports .map and .wad files into Unity. A map becomes a prefab with meshes, colliders, a lightmap baked by libquake and one object per entity. Save in TrenchBroom, Unity reimports.',
@@ -234,7 +236,7 @@ function section(name, i) {
 <section class="project" id="${name}">
   <div>
     <p class="caps index"><span>${num(i)}</span> / ${p.kind}</p>
-    <h2>${name}</h2>
+    <h2>${p.title}</h2>
     <p class="blurb">${p.blurb}</p>
     <div class="actions">
       <a class="button primary" href="/${name}/">docs →</a>
