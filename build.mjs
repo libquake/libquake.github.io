@@ -4,6 +4,7 @@
 //   node build.mjs              repos next to this one (../libquake, ../unity)
 //   REPOS=repos node build.mjs  repos somewhere else
 
+import { createHash } from 'node:crypto'
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { join, posix } from 'node:path'
 import hljs from 'highlight.js'
@@ -11,6 +12,11 @@ import { marked } from 'marked'
 
 const repos = process.env.REPOS ?? '..'
 const out = '_site'
+
+// GitHub Pages lets browsers cache every file for 10 minutes. The content hash in the url makes a changed
+// stylesheet or script load right away instead of being mixed with a new page.
+const asset = (file) =>
+  `/${file}?v=${createHash('sha256').update(readFileSync(join('src', file))).digest('hex').slice(0, 8)}`
 
 // Every markdown file in docs/ and every source in examples/ has to be listed here, the build fails otherwise.
 const projects = {
@@ -260,14 +266,14 @@ const shell = ({ title, description, on, body }) => `<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="${asset('favicon.svg')}" type="image/svg+xml">
 <link rel="preload" href="/fonts/PermanentMarker-400.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="${asset('style.css')}">
 <script>try{const t=localStorage.getItem('theme');if(t)document.documentElement.dataset.theme=t}catch{}</script>
 </head>
 <body>
 <header class="bar">
-  <a class="logo" href="/"><img src="/favicon.svg" alt="" width="20" height="20">libquake</a>
+  <a class="logo" href="/"><img src="${asset('favicon.svg')}" alt="" width="20" height="20">libquake</a>
   <nav>
     ${Object.keys(projects)
       .map((n) => `<a href="/${n}/"${n === on ? ' class="on"' : ''}>${n}</a>`)
@@ -280,7 +286,7 @@ ${body}
   <span>MIT licensed</span>
   <button class="text" id="theme" type="button">theme: system</button>
 </footer>
-<script src="/theme.js"></script>
+<script src="${asset('theme.js')}"></script>
 </body>
 </html>
 `
