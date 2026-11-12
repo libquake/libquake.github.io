@@ -7,6 +7,7 @@
     "serve": "node build.mjs && python3 -m http.server -d _site 8080"
   },
   "devDependencies": {
+    "highlight.js": "11.11.1",
     "marked": "18.1.3"
   }
 }

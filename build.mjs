@@ -6,12 +6,13 @@
 
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { join, posix } from 'node:path'
+import hljs from 'highlight.js'
 import { marked } from 'marked'
 
 const repos = process.env.REPOS ?? '..'
 const out = '_site'
 
-// Every markdown file in docs/ has to be listed here, the build fails otherwise.
+// Every markdown file in docs/ and every source in examples/ has to be listed here, the build fails otherwise.
 const projects = {
   libquake: {
     title: 'core lib',
@@ -47,6 +48,8 @@ const projects = {
       ]],
       ['tools', [['tools/qviewer', 'qviewer']]],
     ],
+    // shown in full under examples/, the guide includes parts of them
+    examples: ['load_bsp.cpp', 'build_map.cpp', 'bake.cpp', 'light_styles.cpp', 'wad_textures.cpp', 'c_api.c'],
   },
   unity: {
     title: 'unity',
@@ -104,30 +107,84 @@ function markdownFiles(dir, prefix = '') {
   })
 }
 
+const exampleId = (file) => `examples/${file.replace(/\.\w+$/, '')}`
+
+// The docs nav plus a group with one page per example.
+function nav(name) {
+  const { nav, examples } = projects[name]
+  return examples ? [...nav, ['examples', examples.map((f) => [exampleId(f), f])]] : nav
+}
+
 function pages(name) {
   const dir = join(repos, name, 'docs')
-  const listed = projects[name].nav.flatMap(([, items]) => items)
+  const listed = nav(name).flatMap(([, items]) => items)
   const ids = new Set(listed.map(([id]) => id))
   const unlisted = markdownFiles(dir).filter((id) => !ids.has(id))
+  const examples = projects[name].examples ?? []
+  if (examples.length) {
+    const sources = readdirSync(join(repos, name, 'examples')).filter((f) => /\.(c|cpp)$/.test(f))
+    unlisted.push(...sources.filter((f) => !examples.includes(f)).map((f) => `examples/${f}`))
+  }
   if (unlisted.length) throw new Error(`${name}: not in the nav of build.mjs: ${unlisted.join(', ')}`)
-  return listed.map(([id, title]) => ({ id, title, md: readFileSync(join(dir, `${id}.md`), 'utf8') }))
+  return listed.map(([id, title]) => {
+    const file = examples.find((f) => exampleId(f) === id)
+    return file
+      ? { id, title, md: exampleMarkdown(name, file), source: `examples/${file}` }
+      : { id, title, md: readFileSync(join(dir, `${id}.md`), 'utf8'), source: `docs/${id}.md` }
+  })
+}
+
+// The leading comment becomes the text, the "usage:" line a command, the rest the code.
+function exampleMarkdown(name, file) {
+  const src = readFileSync(join(repos, name, 'examples', file), 'utf8')
+  const head = src.match(/^(?:\/\/[^\n]*\n)+|^\/\*[\s\S]*?\*\/\n/)?.[0] ?? ''
+  const text = head
+    .replace(/^\/\*|\*\/$/gm, '')
+    .split('\n')
+    .map((l) => l.replace(/^\s*(\/\/|\*\/?|\/\*)\s?/, '').trim())
+    .filter(Boolean)
+  const usage = text.filter((l) => l.startsWith('usage:')).map((l) => l.slice(6).trim())
+  const about = text.filter((l) => !l.startsWith('usage:')).join(' ')
+  const code = src.slice(head.length).replace(/^.*--8<-- \[[^\]]+\].*\n/gm, '').trim()
+  const lang = file.endsWith('.c') ? 'c' : 'cpp'
+  return [
+    `# ${file}`,
+    about,
+    usage.length ? '```sh\n' + usage.join('\n') + '\n```' : '',
+    'Built with `QLIB_BUILD_EXAMPLES=ON`.',
+    '```' + lang + '\n' + code + '\n```',
+  ].join('\n\n')
 }
 
 // pymdownx snippets as the docs use them: --8<-- "path:section" includes the lines between
-// "--8<-- [start:section]" and "--8<-- [end:section]" of a file in the repo, dedented.
+// "--8<-- [start:section]" and "--8<-- [end:section]" of a file in the repo, dedented. A code block made of
+// snippets gets a line naming the files it comes from.
 function snippets(md, name) {
-  return md.replace(/^--8<-- "([^":]+)(?::([\w-]+))?"$/gm, (_, file, section) => {
-    let lines = readFileSync(join(repos, name, file), 'utf8').split('\n')
-    if (section) {
-      const start = lines.findIndex((l) => l.includes(`--8<-- [start:${section}]`))
-      const end = lines.findIndex((l) => l.includes(`--8<-- [end:${section}]`))
-      if (start < 0 || end < start) throw new Error(`${name}: no section ${section} in ${file}`)
-      lines = lines.slice(start + 1, end)
-    }
-    lines = lines.filter((l) => !l.includes('--8<-- ['))
-    const indent = Math.min(...lines.filter((l) => l.trim()).map((l) => l.match(/^ */)[0].length))
-    return lines.map((l) => l.slice(indent)).join('\n')
-  })
+  return md
+    .replace(/^```(\w*)\n((?:--8<-- "[^"]+"\n)+)```$/gm, (block, lang, lines) => {
+      const files = [...new Set([...lines.matchAll(/--8<-- "([^":]+)/g)].map((m) => m[1]))]
+      return `${block}\n\n<p class="from">from ${files.map((f) => sourceLink(name, f)).join(', ')}</p>`
+    })
+    .replace(/^--8<-- "([^":]+)(?::([\w-]+))?"$/gm, (_, file, section) => include(name, file, section))
+}
+
+function sourceLink(name, file) {
+  const example = projects[name].examples?.find((f) => `examples/${f}` === file)
+  const href = example ? pageUrl(name, exampleId(example)) : `${github(name)}/blob/main/${file}`
+  return `<a href="${href}"><code>${esc(file)}</code></a>`
+}
+
+function include(name, file, section) {
+  let lines = readFileSync(join(repos, name, file), 'utf8').split('\n')
+  if (section) {
+    const start = lines.findIndex((l) => l.includes(`--8<-- [start:${section}]`))
+    const end = lines.findIndex((l) => l.includes(`--8<-- [end:${section}]`))
+    if (start < 0 || end < start) throw new Error(`${name}: no section ${section} in ${file}`)
+    lines = lines.slice(start + 1, end)
+  }
+  lines = lines.filter((l) => !l.includes('--8<-- ['))
+  const indent = Math.min(...lines.filter((l) => l.trim()).map((l) => l.match(/^ */)[0].length))
+  return lines.map((l) => l.slice(indent)).join('\n')
 }
 
 // --- markdown ------------------------------------------------------------
@@ -169,6 +226,11 @@ const deflist = {
 marked.use({
   extensions: [deflist],
   renderer: {
+    code({ text, lang }) {
+      const known = lang && hljs.getLanguage(lang)
+      const html = known ? hljs.highlight(text, { language: lang }).value : esc(text)
+      return `<pre><code${known ? ` class="hljs language-${lang}"` : ''}>${html}</code></pre>\n`
+    },
     heading({ tokens, depth }) {
       const text = this.parser.parseInline(tokens)
       return `<h${depth} id="${slug(text)}">${text}</h${depth}>\n`
@@ -271,7 +333,7 @@ function docPage(name, list, at) {
   const prev = list[at - 1]
   const next = list[at + 1]
   let n = 0
-  const nav = projects[name].nav
+  const menu = nav(name)
     .map(([group, items]) => {
       const links = items
         .map(([id, title]) => {
@@ -290,9 +352,9 @@ function docPage(name, list, at) {
 <aside class="side">
   <p class="caps">${projects[name].kind}</p>
   <nav>
-    ${nav}
+    ${menu}
   </nav>
-  <a class="source" href="${github(name)}/blob/main/docs/${page.id}.md">source ↗</a>
+  <a class="source" href="${github(name)}/blob/main/${page.source}">source ↗</a>
 </aside>
 <article class="doc">
   <p class="caps crumb">${name} <span>/</span> ${num(at)}</p>

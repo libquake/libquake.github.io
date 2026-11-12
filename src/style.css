@@ -35,6 +35,8 @@
   --faint: #b5b1a6;
   --accent: #2f6f62;
   --dir: #a84a6a;
+  --num: #9a6417;
+  --type: #4b5fa6;
   --neon: linear-gradient(100deg, #e0115f, #ff5f1f);
   color-scheme: light;
 }
@@ -53,6 +55,8 @@
     --faint: #4c4a45;
     --accent: #7fc4af;
     --dir: #eab3c4;
+    --num: #e2bd7a;
+    --type: #a3b4ee;
     --neon: linear-gradient(100deg, #ff6ec7 0%, #c77dff 48%, #4cc9f0 100%);
     color-scheme: dark;
   }
@@ -71,6 +75,8 @@
   --faint: #4c4a45;
   --accent: #7fc4af;
   --dir: #eab3c4;
+  --num: #e2bd7a;
+  --type: #a3b4ee;
   --neon: linear-gradient(100deg, #ff6ec7 0%, #c77dff 48%, #4cc9f0 100%);
   color-scheme: dark;
 }
@@ -502,6 +508,43 @@ pre {
   border: 0;
   border-top: 1px solid var(--line);
   margin: 32px 0;
+}
+
+/* syntax highlighting, done by highlight.js at build time */
+.hljs-keyword,
+.hljs-meta .hljs-keyword {
+  color: var(--dir);
+}
+.hljs-string,
+.hljs-meta .hljs-string {
+  color: var(--accent);
+}
+.hljs-number,
+.hljs-literal {
+  color: var(--num);
+}
+.hljs-type,
+.hljs-built_in,
+.hljs-title.class_ {
+  color: var(--type);
+}
+.hljs-title.function_ {
+  color: var(--strong);
+}
+.hljs-comment,
+.hljs-meta {
+  color: var(--dim);
+}
+
+.doc .from {
+  margin: -8px 0 16px;
+  font: 11px var(--mono);
+  color: var(--dim);
+}
+.doc .from code {
+  padding: 0;
+  background: none;
+  color: inherit;
 }
 
 /* term and description, the function lists of the reference */
