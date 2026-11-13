@@ -1,4 +1,4 @@
-# Builds the site with the docs from libquake and the Unity package and publishes it.
+# Builds the site with the docs from libquake and the Unity and Unreal plugins and publishes it.
 # Runs on a push here, daily, by hand, or on a repository_dispatch of type "docs".
 name: pages
 
@@ -29,6 +29,8 @@ jobs:
         with: { repository: libquake/libquake, path: repos/libquake, sparse-checkout: "docs\nexamples", sparse-checkout-cone-mode: false }
       - uses: actions/checkout@v4
         with: { repository: libquake/unity, path: repos/unity, sparse-checkout: docs }
+      - uses: actions/checkout@v4
+        with: { repository: libquake/unreal, path: repos/unreal, sparse-checkout: docs }
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: npm ci

@@ -1,7 +1,7 @@
-// Builds the site into _site/: a landing page plus the docs of libquake and the Unity package, rendered from
-// the markdown in each repo's docs/. Fonts and scripts are served from the site itself.
+// Builds the site into _site/: a landing page plus the docs of libquake and the Unity and Unreal plugins, rendered
+// from the markdown in each repo's docs/. Fonts and scripts are served from the site itself.
 //
-//   node build.mjs              repos next to this one (../libquake, ../unity)
+//   node build.mjs              repos next to this one (../libquake, ../unity, ../unreal)
 //   REPOS=repos node build.mjs  repos somewhere else
 
 import { createHash } from 'node:crypto'
@@ -82,6 +82,35 @@ https://github.com/libquake/unity.git?path=/com.libquake.unity`,
       ]],
       ['reference', [
         ['reference/map-config', 'Map config'],
+        ['reference/components', 'Components'],
+      ]],
+    ],
+  },
+  unreal: {
+    title: 'unreal',
+    kind: 'unreal plugin',
+    blurb:
+      'Imports .map, .bsp and .wad files into Unreal Engine 5.8. A map becomes static meshes with collision, material instances and one actor per entity, lit by Unreal. Save in TrenchBroom, Unreal reimports.',
+    features: [
+      ['map', 'static meshes with collision from the brushes, TrenchBroom groups as named meshes'],
+      ['bsp', 'meshes and the textures it brings, no wad needed'],
+      ['light', 'Quake lights as Unreal lights, baked by Unreal or movable for Lumen'],
+      ['entities', 'actor classes per class name, keys on a component, reimports keep placed actors'],
+      ['liquids', "Quake's warp, translucent water with water volumes"],
+    ],
+    code: `<span class="faint"># into the Plugins folder of a C++ project</span>
+<span class="prompt">$</span> git clone https://github.com/libquake/unreal Plugins/LibQuake`,
+    nav: [
+      [null, [['index', 'Overview']]],
+      ['guide', [
+        ['guide/getting-started', 'Getting started'],
+        ['guide/maps', 'Maps'],
+        ['guide/lighting', 'Lighting'],
+        ['guide/entities', 'Entities'],
+      ]],
+      ['reference', [
+        ['reference/project-settings', 'Project settings'],
+        ['reference/map-settings', 'Map settings'],
         ['reference/components', 'Components'],
       ]],
     ],
@@ -323,11 +352,11 @@ function section(name, i) {
 function home() {
   return shell({
     title: 'libquake',
-    description: 'libquake: a C++ library for Quake 1 map, bsp and wad files, and a Unity importer built on it.',
+    description: 'libquake: a C++ library for Quake 1 map, bsp and wad files, and Unity and Unreal importers built on it.',
     body: `<main>
 <section class="intro">
   <h1 class="brand">libquake</h1>
-  <p class="lede">Quake 1 map, bsp and wad files for engines. A C++20 library with a C API, and a Unity package built on it.</p>
+  <p class="lede">Quake 1 map, bsp and wad files for engines. A C++20 library with a C API, and plugins for Unity and Unreal built on it.</p>
 </section>
 ${Object.keys(projects).map(section).join('\n')}
 </main>`,
