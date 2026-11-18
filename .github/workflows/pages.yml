@@ -1,4 +1,4 @@
-# Builds the site with the docs from libquake and the Unity and Unreal plugins and publishes it.
+# Builds the site with the docs from libquake and the Godot, Unity and Unreal plugins and publishes it.
 # Runs on a push here, daily, by hand, or on a repository_dispatch of type "docs".
 name: pages
 
@@ -27,6 +27,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with: { repository: libquake/libquake, path: repos/libquake, sparse-checkout: "docs\nexamples", sparse-checkout-cone-mode: false }
+      - uses: actions/checkout@v4
+        with: { repository: libquake/godot, path: repos/godot, sparse-checkout: docs }
       - uses: actions/checkout@v4
         with: { repository: libquake/unity, path: repos/unity, sparse-checkout: docs }
       - uses: actions/checkout@v4

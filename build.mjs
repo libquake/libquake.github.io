@@ -1,7 +1,7 @@
-// Builds the site into _site/: a landing page plus the docs of libquake and the Unity and Unreal plugins, rendered
-// from the markdown in each repo's docs/. Fonts and scripts are served from the site itself.
+// Builds the site into _site/: a landing page plus the docs of libquake and the Godot, Unity and Unreal plugins,
+// rendered from the markdown in each repo's docs/. Fonts and scripts are served from the site itself.
 //
-//   node build.mjs              repos next to this one (../libquake, ../unity, ../unreal)
+//   node build.mjs              repos next to this one (../libquake, ../godot, ../unity, ../unreal)
 //   REPOS=repos node build.mjs  repos somewhere else
 
 import { createHash } from 'node:crypto'
@@ -56,6 +56,36 @@ const projects = {
     ],
     // shown in full under examples/, the guide includes parts of them
     examples: ['load_bsp.cpp', 'build_map.cpp', 'bake.cpp', 'light_styles.cpp', 'wad_textures.cpp', 'c_api.c'],
+  },
+  godot: {
+    title: 'godot',
+    kind: 'godot plugin',
+    blurb:
+      'Imports .map and .bsp files into Godot 4.5+. A map becomes a scene drawn like Quake, with light baked by libquake, collision per brush and one node per entity. Save in TrenchBroom, Godot reimports.',
+    features: [
+      ['map', 'scenes with Quake-style surfaces, sky and warped liquids, convex collision per brush'],
+      ['light', 'baked on import or for levels put together in Godot, also in the game; light styles, models lit like Quake'],
+      ['entities', 'scenes or scripts per class name, @export variables as keys, a TrenchBroom config from them'],
+      ['grid', 'TrenchBroom groups as mesh library items for GridMaps'],
+      ['effects', 'underwater view and retro ground fog'],
+    ],
+    code: `<span class="faint"># copy addons/libquake into the project, enable the plugin</span>
+<span class="prompt">$</span> git clone https://github.com/libquake/godot`,
+    nav: [
+      [null, [['index', 'Overview']]],
+      ['guide', [
+        ['guide/getting-started', 'Getting started'],
+        ['guide/maps', 'Maps'],
+        ['guide/textures', 'Textures'],
+        ['guide/lighting', 'Lighting'],
+        ['guide/entities', 'Entities'],
+        ['guide/effects', 'Effects'],
+      ]],
+      ['reference', [
+        ['reference/import-options', 'Import options'],
+        ['reference/nodes', 'Nodes and resources'],
+      ]],
+    ],
   },
   unity: {
     title: 'unity',
