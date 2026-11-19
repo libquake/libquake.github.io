@@ -66,7 +66,8 @@ const projects = {
       ['map', 'scenes with Quake-style surfaces, sky and warped liquids, convex collision per brush'],
       ['light', 'baked on import or for levels put together in Godot, also in the game; light styles, models lit like Quake'],
       ['entities', 'scenes or scripts per class name, @export variables as keys, a TrenchBroom config from them'],
-      ['grid', 'TrenchBroom groups as mesh library items for GridMaps'],
+      ['pieces', 'TrenchBroom groups as scenes, dragged into levels from the Quake panel'],
+      ['wads', 'every wad in the project found by the maps, its textures shown in the editor'],
       ['effects', 'underwater view and retro ground fog'],
     ],
     code: `<span class="faint"># copy addons/libquake into the project, enable the plugin</span>
